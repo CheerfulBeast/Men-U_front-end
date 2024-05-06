@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:men_u/login.dart';
 import 'package:men_u/widgets/category.dart';
 import 'package:men_u/widgets/item.dart';
 import 'package:men_u/widgets/cart.dart';
@@ -20,7 +21,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Restaurant Name',
+      title: 'Men-U',
       theme: ThemeData(
         visualDensity: VisualDensity.adaptivePlatformDensity,
         useMaterial3: true,
@@ -87,13 +88,28 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  int count = 0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Home",
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: GestureDetector(
+          onTap: () {
+            count++;
+            if (count == 5) {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) {
+                  return LoginScreen();
+                }),
+              );
+              count = 0;
+            }
+          },
+          child: const Text(
+            "Menu",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         centerTitle: true,
         scrolledUnderElevation: 1,

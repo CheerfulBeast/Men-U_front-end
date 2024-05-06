@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shimmer/shimmer.dart';
 
 class Order extends StatefulWidget {
   const Order({super.key});
@@ -8,13 +12,34 @@ class Order extends StatefulWidget {
 }
 
 class _OrderState extends State<Order> {
-  double phoneHeight(BuildContext context) {
-    return MediaQuery.of(context).size.height;
+  List<Map<String, dynamic>> orders = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchData();
+  }
+
+  Future<void> fetchData() async {
+    var url = Uri.parse('http://192.168.1.29:8000/api/order/');
+    try {
+      var response = await http.get(url);
+      if (response.statusCode == 200) {
+        List<dynamic> ordersData = json.decode(response.body);
+        setState(() {
+          orders = List<Map<String, dynamic>>.from(ordersData);
+        });
+      } else {
+        print(
+            'Failed to load data \nResponse status: ${response.statusCode} \n data: ${response.body}');
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    double height = phoneHeight(context);
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -26,11 +51,22 @@ class _OrderState extends State<Order> {
               ?.copyWith(fontWeight: FontWeight.bold),
         ),
       ),
-      body: ListView.builder(
-          itemCount: 1,
-          itemBuilder: (context, index) {
-            return OrderItem();
-          }),
+      body: orders.isEmpty
+          ? ShimmerList()
+          : ListView.builder(
+              itemCount: orders.length,
+              itemBuilder: (context, index) {
+                return OrderItem(
+                  index: index,
+                  id: orders[index]['id'],
+                  price: orders[index]['price'],
+                  name: orders[index]['item']['title'],
+                  url:
+                      'http://192.168.1.29:8000/storage/images/${orders[index]['item']['img']}',
+                  count: orders[index]['quantity'],
+                );
+              },
+            ),
       bottomNavigationBar: BottomAppBar(
         elevation: 0,
         child: TextButton.icon(
@@ -43,7 +79,14 @@ class _OrderState extends State<Order> {
                   Theme.of(context).buttonTheme.colorScheme?.tertiary),
               overlayColor:
                   MaterialStateProperty.all(Theme.of(context).splashColor)),
-          onPressed: () {},
+          onPressed: () async {
+            //TODO:: CHANGE PARAMETER TO PROPER ORDER ID, MAKE LOGIN THEN PERSISENT LOGIN THEN TABLE SELECT THEN PASS TABLE SELECT INTO URL PARAMETER
+            var response = await http.get(
+                Uri.parse("http://192.168.1.29:8000/api/order/passOrder/1"));
+
+            print(
+                "Response Status Code: ${response.statusCode} \nResponse Body: ${response.body}");
+          },
           icon: Icon(Icons.play_arrow_rounded),
           label: Text("Continue"),
         ),
@@ -52,12 +95,84 @@ class _OrderState extends State<Order> {
   }
 }
 
-class OrderItem extends StatelessWidget {
-  int count = 0;
+class ShimmerList extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: ListView.builder(
+          itemCount: 5,
+          itemBuilder: (context, index) {
+            return ListTile(
+              title: Container(
+                height: 130,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+            );
+          }),
+    );
+  }
+}
+
+class OrderItem extends StatefulWidget {
+  final int id;
+  final int index;
+  final dynamic price;
+  final dynamic name;
+  int count;
+  final String? url;
+
+  OrderItem({
+    super.key,
+    required this.id,
+    required this.index,
+    required this.count,
+    required this.price,
+    required this.name,
+    required this.url,
+  });
+
+  @override
+  State<OrderItem> createState() => _OrderItemState();
+}
+
+class _OrderItemState extends State<OrderItem> {
+  Future<void> updateCount(int id, bool operation) async {
+    String uri = "http://192.168.1.29:8000/api/order/$id";
+    final response = await http.put(
+      Uri.parse(uri),
+      headers: <String, String>{
+        HttpHeaders.contentTypeHeader: 'application/json'
+      },
+      body: jsonEncode(<String, dynamic>{
+        'operation': operation,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print('Request Successful: ${response.statusCode}');
+      List<dynamic> resource = jsonDecode(response.body);
+      print('Response Body: $resource');
+
+      print(resource);
+      setState(() {
+        //TODO:: update count state
+        widget.count = resource[widget.index]['quantity'];
+      });
+    } else {
+      print('Request Failed: ${response.statusCode}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: SizedBox(
         height: 130,
         child: Card.outlined(
@@ -74,10 +189,10 @@ class OrderItem extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: const Image(
+                    child: Image(
                       fit: BoxFit.cover,
-                      image: NetworkImage(
-                          "https://cdn.dribbble.com/users/1376976/screenshots/19271210/media/8f64e24f47ef442d4ec27987e12110f0.png?resize=1000x750&vertical=center"),
+                      image: NetworkImage(widget.url ??
+                          "https://t3.ftcdn.net/jpg/05/62/05/20/360_F_562052065_yk3KPuruq10oyfeu5jniLTS4I2ky3bYX.jpg"),
                     ),
                   ),
                 ),
@@ -97,11 +212,11 @@ class OrderItem extends StatelessWidget {
                               ?.copyWith(color: Colors.grey.shade500),
                         ),
                         Text(
-                          "Name",
+                          widget.name,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         Text(
-                          "PHP100",
+                          "PHP${widget.price}",
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
@@ -116,18 +231,24 @@ class OrderItem extends StatelessWidget {
                   children: [
                     IconButton.filledTonal(
                       visualDensity:
-                          VisualDensity(horizontal: -3, vertical: -3),
-                      onPressed: () {},
+                          const VisualDensity(horizontal: -3, vertical: -3),
+                      onPressed: () {
+                        //TODO:: update count to minus one
+                        updateCount(widget.id, false);
+                      },
                       icon: const Icon(
                         Icons.remove_rounded,
                         size: 10,
                       ),
                     ),
-                    Text("$count"),
+                    Text('${widget.count}'),
                     IconButton.filled(
                         visualDensity:
-                            VisualDensity(horizontal: -3, vertical: -3),
-                        onPressed: () {},
+                            const VisualDensity(horizontal: -3, vertical: -3),
+                        onPressed: () {
+                          //TODO:: update count to plus one
+                          updateCount(widget.id, true);
+                        },
                         icon: const Icon(
                           Icons.add_rounded,
                           size: 10,

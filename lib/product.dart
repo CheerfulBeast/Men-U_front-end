@@ -1,7 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 import 'package:men_u/widgets/cart.dart';
+
+import 'package:http/http.dart' as http;
 
 class Product extends StatefulWidget {
   final String? url;
@@ -53,6 +58,7 @@ class _ProductState extends State<Product> {
     String description = widget.description;
     int price = calculatePrice();
     int iniPrice = getPrice();
+    int id = widget.id;
 
     return Scaffold(
       appBar: AppBar(
@@ -74,8 +80,35 @@ class _ProductState extends State<Product> {
                 color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(10),
                 child: InkWell(
-                  onTap: () {
+                  onTap: () async {
                     //TODO:: Ordering API
+                    try {
+                      final response = await http.post(
+                          Uri.parse("http://192.168.1.29:8000/api/order"),
+                          headers: <String, String>{
+                            HttpHeaders.contentTypeHeader: 'application/json'
+                          },
+                          body: jsonEncode(<String, dynamic>{
+                            'order_id': 1,
+                            'item_id': id,
+                            'price': price,
+                            'quantity': count,
+                          }));
+
+                      if (response.statusCode == 200) {
+                        print("request successful");
+                      } else {
+                        print("Error Code: ${response.statusCode}");
+                        print("Error body: ${response.body}");
+                        print("$id $price $count");
+                      }
+
+                      print(response.statusCode);
+
+                      Navigator.pop(context);
+                    } catch (e) {
+                      print("Error: $e");
+                    }
                   },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 15.0),
