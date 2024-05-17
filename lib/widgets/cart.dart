@@ -9,7 +9,7 @@ class Cart extends StatelessWidget {
     return IconButton(
       onPressed: () {
         Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-          return Order();
+          return const Order();
         }));
       },
       icon: const Icon(Icons.shopping_cart_checkout),

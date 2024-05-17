@@ -1,6 +1,5 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 import "package:flutter/material.dart";
-import "package:flutter/widgets.dart";
 import "package:men_u/product.dart";
 
 class Item extends StatelessWidget {
@@ -9,15 +8,18 @@ class Item extends StatelessWidget {
   final dynamic name;
   final dynamic description;
   final dynamic price;
+  final dynamic currency;
+  final List<dynamic> allergens;
 
-  const Item({
-    super.key,
-    this.url,
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.price,
-  });
+  const Item(
+      {super.key,
+      this.url,
+      required this.id,
+      required this.name,
+      required this.description,
+      required this.price,
+      required this.currency,
+      required this.allergens});
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +35,8 @@ class Item extends StatelessWidget {
                 description: description ?? "",
                 price: price,
                 url: url,
+                allergens: allergens,
+                currency: currency,
               ),
             ),
           );
@@ -46,8 +50,8 @@ class Item extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15),
                   image: DecorationImage(
-                    image: NetworkImage(url ??
-                        "https://w7.pngwing.com/pngs/29/173/png-transparent-null-pointer-symbol-computer-icons-pi-miscellaneous-angle-trademark.png"),
+                    image: NetworkImage(
+                        url ?? "https://w7.pngwing.com/pngs/29/173/png-transparent-null-pointer-symbol-computer-icons-pi-miscellaneous-angle-trademark.png"),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -63,10 +67,7 @@ class Item extends StatelessWidget {
                     name.toString(),
                     overflow: TextOverflow.ellipsis,
                     softWrap: true,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -78,7 +79,7 @@ class Item extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "PHP$price",
+                    "$currency$price",
                     overflow: TextOverflow.clip,
                   ),
                   SizedBox.square(

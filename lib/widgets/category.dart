@@ -27,8 +27,8 @@ class Category extends StatelessWidget {
               decoration: BoxDecoration(
                 image: DecorationImage(
                   fit: BoxFit.cover,
-                  image: NetworkImage(url ??
-                      "https://w7.pngwing.com/pngs/29/173/png-transparent-null-pointer-symbol-computer-icons-pi-miscellaneous-angle-trademark.png"),
+                  image: NetworkImage(
+                      url ?? "https://w7.pngwing.com/pngs/29/173/png-transparent-null-pointer-symbol-computer-icons-pi-miscellaneous-angle-trademark.png"),
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -39,6 +39,7 @@ class Category extends StatelessWidget {
             child: Text(
               name,
               textDirection: TextDirection.ltr,
+              overflow: TextOverflow.ellipsis,
             ),
           )
         ]),

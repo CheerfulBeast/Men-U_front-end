@@ -1,12 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-
+import 'package:men_u/BaseApi.dart';
 import 'package:men_u/widgets/cart.dart';
-
-import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Product extends StatefulWidget {
   final String? url;
@@ -14,14 +10,18 @@ class Product extends StatefulWidget {
   final String name;
   final String description;
   final int price;
+  final dynamic currency;
+  final List<dynamic> allergens;
 
   const Product(
       {super.key,
+      required this.allergens,
       this.url,
       required this.id,
       required this.name,
       required this.description,
-      required this.price});
+      required this.price,
+      required this.currency});
 
   @override
   State<Product> createState() => _ProductState();
@@ -29,6 +29,7 @@ class Product extends StatefulWidget {
 
 class _ProductState extends State<Product> {
   int table = 1;
+  var productActions = ProductActions();
 
   String getImageUrl() {
     return widget.url ?? "tae";
@@ -48,6 +49,52 @@ class _ProductState extends State<Product> {
       return price;
     } else {
       return price * count;
+    }
+  }
+
+  Widget allergenCheck(List<dynamic> list) {
+    var iniPrice = getPrice();
+    if (list.isNotEmpty) {
+      return SizedBox(
+        height: 30, // Specify a fixed height or use Expanded to take up remaining space
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: list.length + 1,
+          itemBuilder: ((context, index) {
+            if (index == 0) {
+              return Card.filled(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    "${widget.currency}$iniPrice",
+                  ),
+                ),
+              );
+            } else {
+              return Card.outlined(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    "${widget.allergens[index - 1]['allergen']}",
+                  ),
+                ),
+              );
+            }
+          }),
+        ),
+      );
+    } else {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Card.filled(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+              "${widget.currency}$iniPrice",
+            ),
+          ),
+        ),
+      );
     }
   }
 
@@ -81,31 +128,16 @@ class _ProductState extends State<Product> {
                 borderRadius: BorderRadius.circular(10),
                 child: InkWell(
                   onTap: () async {
-                    //TODO:: Ordering API
                     try {
-                      final response = await http.post(
-                          Uri.parse("http://192.168.1.29:8000/api/order"),
-                          headers: <String, String>{
-                            HttpHeaders.contentTypeHeader: 'application/json'
-                          },
-                          body: jsonEncode(<String, dynamic>{
-                            'order_id': 1,
-                            'item_id': id,
-                            'price': price,
-                            'quantity': count,
-                          }));
-
-                      if (response.statusCode == 200) {
-                        print("request successful");
+                      SharedPreferences prefs = await SharedPreferences.getInstance();
+                      int? orderId = prefs.getInt('table');
+                      if (orderId != null) {
+                        await productActions.orderProduct(orderId, id, price, count);
                       } else {
-                        print("Error Code: ${response.statusCode}");
-                        print("Error body: ${response.body}");
-                        print("$id $price $count");
+                        print('No table set');
                       }
-
-                      print(response.statusCode);
-
-                      Navigator.pop(context);
+                      if (!context.mounted) return;
+                      Navigator.of(context).pop();
                     } catch (e) {
                       print("Error: $e");
                     }
@@ -118,24 +150,14 @@ class _ProductState extends State<Product> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "PHP$price",
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelLarge
-                                ?.copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.onPrimary,
-                                    fontWeight: FontWeight.bold),
+                            "${widget.currency}$price",
+                            style:
+                                Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.bold),
                           ),
                           Text(
                             "Add to cart",
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelLarge
-                                ?.copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.onPrimary,
-                                    fontWeight: FontWeight.bold),
+                            style:
+                                Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.bold),
                           )
                         ],
                       ),
@@ -165,7 +187,6 @@ class _ProductState extends State<Product> {
                       setState(
                         () {
                           count += 1;
-
                           print(count);
                         },
                       );
@@ -199,10 +220,8 @@ class _ProductState extends State<Product> {
                       width: double.infinity,
                       height: 250,
                       decoration: BoxDecoration(
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(10)),
-                        image: DecorationImage(
-                            image: NetworkImage(image), fit: BoxFit.cover),
+                        borderRadius: const BorderRadius.all(Radius.circular(10)),
+                        image: DecorationImage(image: NetworkImage(image), fit: BoxFit.cover),
                       ),
                     ),
                   ),
@@ -212,21 +231,10 @@ class _ProductState extends State<Product> {
                     child: Text(
                       name,
                       overflow: TextOverflow.clip,
-                      style: const TextStyle(
-                          fontSize: 30, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                     ),
                   ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Card.filled(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text(
-                          "PHP$iniPrice",
-                        ),
-                      ),
-                    ),
-                  ),
+                  allergenCheck(widget.allergens),
                   const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerLeft,
