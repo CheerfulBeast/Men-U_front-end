@@ -1,7 +1,10 @@
 // ignore_for_file: use_key_in_widget_constructors, unnecessary_this, prefer_const_constructors, prefer_const_literals_to_create_immutables, overridden_fields
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:men_u/BaseApi.dart';
+import 'package:men_u/Localization.dart';
 import 'package:men_u/login.dart';
 import 'package:men_u/table.dart';
 import 'package:men_u/widgets/category.dart';
@@ -10,6 +13,20 @@ import 'package:men_u/widgets/cart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure that Flutter is initialized
+
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  if (prefs.getBool('isLoggedIn') ?? true) {
+    BaseAPI baseAPI = BaseAPI(); // Initialize BaseAPI to initialize the token
+    await baseAPI.initializeToken(); // Await token initialization
+    UserActions user = UserActions();
+    await user.getUser();
+    log('User is logged in');
+    LocalizedText().translate(user.userData['language']);
+  } else {
+    log('User is not logged in');
+  }
+
   runApp(MainApp());
 }
 
@@ -117,7 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
         elevation: 50,
         child: Column(
           children: [
-            DrawerHeader(child: Text('Choose a language')),
+            DrawerHeader(child: Text(LocalizedText().chooseLanguage ?? 'Choose a language')),
             Expanded(
               child: ListView.builder(
                 itemCount: languages.length,
@@ -128,11 +145,12 @@ class _MyHomePageState extends State<MyHomePage> {
                     onTap: () async {
                       setState(() {
                         language = menuActions.language = languages[index]['id'];
-                        // language = languages[index]['id'];
                         fetchData();
                       });
                       SharedPreferences prefs = await SharedPreferences.getInstance();
                       prefs.setInt('language', languages[index]['id']);
+                      LocalizedText textTranslation = LocalizedText();
+                      textTranslation.translate(prefs.getInt('language') ?? 5);
                       print('language id: $language');
                       if (!context.mounted) return;
                       Navigator.of(context).pop();
@@ -177,10 +195,11 @@ class _MyHomePageState extends State<MyHomePage> {
               token = 'no token';
             }
             print('Token: $token');
+            print(LocalizedText().menu);
             print('Count: $count');
           },
-          child: const Text(
-            "Menu",
+          child: Text(
+            LocalizedText().menu ?? 'Menu',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
@@ -199,7 +218,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   margin: EdgeInsets.symmetric(horizontal: 15),
                   width: double.infinity,
                   child: Text(
-                    "Categories",
+                    LocalizedText().categories ?? 'Categories',
                     style: Theme.of(context).textTheme.titleLarge,
                     textAlign: TextAlign.left,
                   ),
@@ -216,7 +235,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         print("index category: $index");
                         return Category(
                           url: images[0],
-                          name: "All",
+                          name: LocalizedText().all ?? "All",
                           callback: () => fetchData(),
                         );
                       } else {
@@ -232,7 +251,9 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
             Container(
-                width: double.infinity, margin: EdgeInsets.symmetric(horizontal: 15), child: Text("Available", style: Theme.of(context).textTheme.titleLarge)),
+                width: double.infinity,
+                margin: EdgeInsets.symmetric(horizontal: 15),
+                child: Text(LocalizedText().available ?? 'No Translation', style: Theme.of(context).textTheme.titleLarge)),
             GridView.builder(
               padding: EdgeInsets.symmetric(horizontal: 15),
               itemCount: items.length,

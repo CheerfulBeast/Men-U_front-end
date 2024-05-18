@@ -1,9 +1,11 @@
 // ignore_for_file: avoid_print, non_constant_identifier_names
 
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:men_u/Localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BaseAPI {
@@ -15,6 +17,7 @@ class BaseAPI {
   // Constructor to initialize token
   BaseAPI() {
     initializeToken();
+    log('Token: $token');
   }
 
   // Initialize token from SharedPreferences
@@ -40,7 +43,23 @@ class BaseAPI {
   var login = "${api}login/";
   var getTable = "${api}table/";
   var deleteOrder = "${api}order/";
+  var user = "${api}user/";
   static var images = "${rootUrl}storage/images/";
+}
+
+class UserActions extends BaseAPI {
+  Map<String, dynamic> userData = {};
+
+  Future<void> getUser() async {
+    try {
+      http.Response response = await http.get(Uri.parse(super.user), headers: super.getHeaders());
+      var data = jsonDecode(response.body);
+
+      userData = data;
+    } catch (e) {
+      log('Error: $e');
+    }
+  }
 }
 
 class MenuActions extends BaseAPI {
@@ -145,10 +164,13 @@ class OrderActions extends BaseAPI {
 
   Future<List<dynamic>> updateCount(int id, bool operation) async {
     try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      var order_id = prefs.getInt('table');
       http.Response response = await http.put(Uri.parse('${super.order}$id'),
           headers: super.getHeaders(),
           body: jsonEncode(<String, dynamic>{
             'operation': operation,
+            'order_id': order_id ?? 0,
           }));
       statusCode = response.statusCode;
       if (statusCode == 200) {
@@ -212,6 +234,8 @@ class LoginActions extends BaseAPI {
 
       if (response.statusCode == 200) {
         token = data['token'];
+        int language = data['user']['language'];
+        LocalizedText().translate(language);
         print('');
         //sharedpreferences login token and logged in boolean status
         SharedPreferences prefs = await SharedPreferences.getInstance();

@@ -1,6 +1,8 @@
 // ignore_for_file: must_be_immutable, avoid_print
 import 'package:flutter/material.dart';
 import 'package:men_u/BaseApi.dart';
+import 'package:men_u/Localization.dart';
+import 'package:men_u/SplashScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -49,8 +51,8 @@ class _OrderState extends State<Order> {
       ScaffoldMessenger.of(context).removeCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Order item removed'),
-          duration: Duration(seconds: 2),
+          content: Text('Order item Removed'),
+          duration: Duration(seconds: 5),
         ),
       );
     }
@@ -59,8 +61,8 @@ class _OrderState extends State<Order> {
       if (resource.isNotEmpty) {
         setState(() {
           if (index >= 0 && index < orders.length) {
-            orders[index]['quantity'] = resource[index]['quantity'];
-            orders[index]['price'] = resource[index]['price'];
+            orders[index]['quantity'] = resource[0]['quantity'];
+            orders[index]['price'] = resource[0]['price'];
           }
         });
       } else {
@@ -91,7 +93,7 @@ class _OrderState extends State<Order> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          "Cart",
+          LocalizedText().cart ?? 'No Translation',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
       ),
@@ -119,11 +121,11 @@ class _OrderState extends State<Order> {
             ),
       bottomNavigationBar: BottomAppBar(
         elevation: 0,
-        height: 100,
+        height: 120,
         child: Expanded(
           child: Column(children: [
             Text(
-              'Grand Total: ${grandtotal()}',
+              '${LocalizedText().grandTotal ?? 'No Translation'}: ${grandtotal()}',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             TextButton.icon(
@@ -136,21 +138,25 @@ class _OrderState extends State<Order> {
                 //TODO:: CHANGE PARAMETER TO PROPER ORDER ID, MAKE LOGIN THEN PERSISENT LOGIN THEN TABLE SELECT THEN PASS TABLE SELECT INTO URL PARAMETER
                 TableActions tableActions = TableActions();
                 SharedPreferences prefs = await SharedPreferences.getInstance();
-                int? tableId = prefs.getInt('table');
+                int tableId = prefs.getInt('table') ?? 0;
                 tableActions.confirmOrder(tableId);
                 print('token: ${prefs.getString('token')}');
                 if (!context.mounted) return;
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Order item removed'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                  return Splashscreen(
+                    orderId: tableId,
+                  );
+                }));
+                // ScaffoldMessenger.of(context).removeCurrentSnackBar();
+                // ScaffoldMessenger.of(context).showSnackBar(
+                //   const SnackBar(
+                //     content: Text('Order Completed Please Wait...'),
+                //     duration: Duration(seconds: 2),
+                //   ),
+                // );
               },
               icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text("Continue"),
+              label: Text(LocalizedText().continues ?? 'No Translation'),
             ),
           ]),
         ),
