@@ -9,7 +9,7 @@ import 'package:men_u/Localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BaseAPI {
-  static var rootUrl = "http://192.168.1.29:8000/";
+  static var rootUrl = "http://192.168.254.136:8000/";
   static var api = "${rootUrl}api/";
 
   static String? token; // Make token nullable
@@ -44,7 +44,24 @@ class BaseAPI {
   var getTable = "${api}table/";
   var deleteOrder = "${api}order/";
   var user = "${api}user/";
+  var statusUrl = "${api}order/status/";
+  var langauges = "${api}language";
   static var images = "${rootUrl}storage/images/";
+}
+
+class LanguageActions extends BaseAPI {
+  List<dynamic> languages = [];
+
+  Future<void> getLanguages() async {
+    try {
+      http.Response response = await http.get(Uri.parse(super.langauges), headers: super.getHeaders());
+      List<dynamic> data = jsonDecode(response.body);
+
+      languages = data;
+    } catch (e) {
+      log('Error: $e');
+    }
+  }
 }
 
 class UserActions extends BaseAPI {
@@ -71,7 +88,9 @@ class MenuActions extends BaseAPI {
 
   Future<http.Response> getData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    var language = prefs.getInt('language');
     http.Response response;
+    log('${super.getItems}$language');
     if (language != null) {
       response = await http.get(Uri.parse('${super.getItems}$language'), headers: super.getHeaders());
     } else {
@@ -140,6 +159,7 @@ class OrderActions extends BaseAPI {
   List<dynamic> resource = [];
   List<dynamic> orders = [];
   Map<String, dynamic> language = {};
+  num grandtotal = 0;
 
   Future<void> getOrder() async {
     try {
@@ -156,6 +176,12 @@ class OrderActions extends BaseAPI {
 
       orders = responseData['orders'] ?? [];
       language = responseData['language'] ?? [];
+
+      grandtotal = 0;
+      for (var order in orders) {
+        grandtotal += order['price'];
+      }
+      log('GrandTotal of orders: $grandtotal');
     } on Exception catch (e) {
       // TODO
       throw HttpException('Error while fetching Data: $e');
@@ -289,6 +315,20 @@ class TableActions extends BaseAPI {
       return response;
     } catch (e) {
       throw HttpException('No Table Id Found || $e');
+    }
+  }
+
+  Future<void> payStatus(int? id) async {
+    try {
+      http.Response response = await http.put(
+        Uri.parse('${super.statusUrl}$id'),
+        headers: super.getHeaders(),
+        body: jsonEncode(<String, dynamic>{'status': 'Ready to Pay', 'step': 6}),
+      );
+      log('${super.user}$id');
+      log(response.body);
+    } catch (e) {
+      log('Error: $e');
     }
   }
 }

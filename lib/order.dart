@@ -1,4 +1,6 @@
 // ignore_for_file: must_be_immutable, avoid_print
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:men_u/BaseApi.dart';
 import 'package:men_u/Localization.dart';
@@ -17,15 +19,9 @@ class _OrderState extends State<Order> {
   List<dynamic> orders = [];
   Map<String, dynamic> lang = {};
   int? language = 0;
+  late num grandtotal = 0;
 
   OrderActions orderActions = OrderActions();
-
-  @override
-  void initState() {
-    super.initState();
-    fetchData();
-    print('Orders: {$orders}');
-  }
 
   Future<void> fetchData() async {
     await orderActions.getOrder();
@@ -39,20 +35,20 @@ class _OrderState extends State<Order> {
   }
 
   void updateOrderItemCount(int index, bool operation) async {
-    var resource = await orderActions.updateCount(orders[index]['id'], operation);
+    var resource = await orderActions.updateCount(orderActions.orders[index]['id'], operation);
 
-    if (operation == false && orders[index]['quantity'] == 1) {
+    if (operation == false && orderActions.orders[index]['quantity'] == 1) {
       if (!mounted) return;
       setState(() {
-        if (index >= 0 && index < orders.length) {
-          orders.removeAt(index); // Remove the order item from the list
+        if (index >= 0 && index < orderActions.orders.length) {
+          orderActions.orders.removeAt(index); // Remove the order item from the list
         }
       });
       ScaffoldMessenger.of(context).removeCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Order item Removed'),
-          duration: Duration(seconds: 5),
+        SnackBar(
+          content: Text(LocalizedText().remove ?? 'No Translation'),
+          duration: const Duration(seconds: 5),
         ),
       );
     }
@@ -61,15 +57,15 @@ class _OrderState extends State<Order> {
       if (resource.isNotEmpty) {
         setState(() {
           if (index >= 0 && index < orders.length) {
-            orders[index]['quantity'] = resource[0]['quantity'];
-            orders[index]['price'] = resource[0]['price'];
+            orderActions.orders[index]['quantity'] = resource[0]['quantity'];
+            orderActions.orders[index]['price'] = resource[0]['price'];
           }
         });
       } else {
         // If the resource is empty, remove the order item from the list
         setState(() {
           if (index >= 0 && index < orders.length) {
-            orders.removeAt(index);
+            orderActions.orders.removeAt(index);
           }
         });
       }
@@ -79,89 +75,187 @@ class _OrderState extends State<Order> {
     }
   }
 
-  num grandtotal() {
-    late num grandtotal = 0; // Initialize grandtotal to zero
-    for (var order in orders) {
-      grandtotal += order['price'];
-    }
-    return grandtotal;
-  }
+  // Future<void> grandtotalFunction() async {
+  //   for (var order in orders) {
+  //     grandtotal += order['price'];
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(
-          LocalizedText().cart ?? 'No Translation',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: orders.isEmpty
-          ? const ShimmerList()
-          : ListView.builder(
-              itemCount: orders.length,
-              itemBuilder: (context, index) {
-                final order = orders[index];
-                if (order['quantity'] == 0) {
-                  // Return an empty widget when count is zero
-                  return SizedBox.shrink();
-                }
-                return OrderItem(
-                  index: index,
-                  id: order['id'],
-                  price: order['price'],
-                  name: order['item']['title'],
-                  url: '${BaseAPI.images}${order['item']['img']}',
-                  count: order['quantity'],
-                  currency: lang['currency'],
-                  updateCount: (operation) => updateOrderItemCount(index, operation),
-                );
-              },
-            ),
-      bottomNavigationBar: BottomAppBar(
-        elevation: 0,
-        height: 120,
-        child: Expanded(
-          child: Column(children: [
-            Text(
-              '${LocalizedText().grandTotal ?? 'No Translation'}: ${grandtotal()}',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            TextButton.icon(
-              style: ButtonStyle(
-                  foregroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.onTertiary),
-                  textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.titleLarge),
-                  backgroundColor: MaterialStateProperty.all(Theme.of(context).buttonTheme.colorScheme?.tertiary),
-                  overlayColor: MaterialStateProperty.all(Theme.of(context).splashColor)),
-              onPressed: () async {
-                //TODO:: CHANGE PARAMETER TO PROPER ORDER ID, MAKE LOGIN THEN PERSISENT LOGIN THEN TABLE SELECT THEN PASS TABLE SELECT INTO URL PARAMETER
-                TableActions tableActions = TableActions();
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                int tableId = prefs.getInt('table') ?? 0;
-                tableActions.confirmOrder(tableId);
-                print('token: ${prefs.getString('token')}');
-                if (!context.mounted) return;
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-                  return Splashscreen(
-                    orderId: tableId,
-                  );
-                }));
-                // ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                // ScaffoldMessenger.of(context).showSnackBar(
-                //   const SnackBar(
-                //     content: Text('Order Completed Please Wait...'),
-                //     duration: Duration(seconds: 2),
-                //   ),
-                // );
-              },
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: Text(LocalizedText().continues ?? 'No Translation'),
-            ),
-          ]),
-        ),
-      ),
-    );
+    return FutureBuilder(
+        future: orderActions.getOrder(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting && orderActions.orders.isEmpty) {
+            return Scaffold(
+              appBar: AppBar(
+                centerTitle: true,
+                title: Text(
+                  LocalizedText().cart ?? 'No Translation',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ),
+              body: const ShimmerList(),
+            );
+          } else if (snapshot.connectionState == ConnectionState.waiting && orderActions.orders.isNotEmpty) {
+            return Scaffold(
+              appBar: AppBar(
+                centerTitle: true,
+                title: Text(
+                  LocalizedText().cart ?? 'No Translation',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ),
+              body: ListView.builder(
+                  itemCount: orderActions.orders.length,
+                  itemBuilder: (context, index) {
+                    final order = orderActions.orders[index];
+                    if (order['quantity'] == 0) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return OrderItem(
+                      id: order['id'],
+                      index: index,
+                      count: order['quantity'],
+                      price: order['price'],
+                      name: order['item']['title'],
+                      url: '${BaseAPI.images}${order['item']['img']}',
+                      currency: orderActions.language['currency'],
+                      updateCount: (bool operation) => updateOrderItemCount(index, operation),
+                    );
+                  }),
+              bottomNavigationBar: BottomAppBar(
+                elevation: 0,
+                height: 120,
+                child: Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Text(
+                          '${LocalizedText().grandTotal ?? 'No Translation'}: ${orderActions.grandtotal}',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                      TextButton.icon(
+                        style: ButtonStyle(
+                            foregroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.onTertiary),
+                            textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.titleLarge),
+                            backgroundColor: MaterialStateProperty.all(Theme.of(context).buttonTheme.colorScheme?.tertiary),
+                            overlayColor: MaterialStateProperty.all(Theme.of(context).splashColor)),
+                        onPressed: () async {
+                          //TODO:: CHANGE PARAMETER TO PROPER ORDER ID, MAKE LOGIN THEN PERSISENT LOGIN THEN TABLE SELECT THEN PASS TABLE SELECT INTO URL PARAMETER
+                          TableActions tableActions = TableActions();
+                          SharedPreferences prefs = await SharedPreferences.getInstance();
+                          int tableId = prefs.getInt('table') ?? 0;
+                          tableActions.confirmOrder(tableId);
+                          print('token: ${prefs.getString('token')}');
+                          if (!context.mounted) return;
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                            return Splashscreen(
+                              orderId: tableId,
+                            );
+                          }));
+                        },
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        label: Text(LocalizedText().continues ?? 'No Translation'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          } else if (snapshot.hasError) {
+            return Scaffold(
+                appBar: AppBar(
+                  centerTitle: true,
+                  title: Text(
+                    LocalizedText().cart ?? 'No Translation',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                body: Text('Error: ${snapshot.error}'));
+          } else {
+            return Scaffold(
+              appBar: AppBar(
+                centerTitle: true,
+                title: Text(
+                  LocalizedText().cart ?? 'No Translation',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ),
+              body: orderActions.orders.isNotEmpty
+                  ? ListView.builder(
+                      itemCount: orderActions.orders.length,
+                      itemBuilder: (context, index) {
+                        final order = orderActions.orders[index];
+                        if (order['quantity'] == 0) {
+                          return const SizedBox.shrink();
+                        }
+
+                        return OrderItem(
+                          id: order['id'],
+                          index: index,
+                          count: order['quantity'],
+                          price: order['price'],
+                          name: order['item']['title'],
+                          url: '${BaseAPI.images}${order['item']['img']}',
+                          currency: orderActions.language['currency'],
+                          updateCount: (bool operation) => updateOrderItemCount(index, operation),
+                        );
+                      })
+                  : Center(child: Text(LocalizedText().empty ?? 'No Translation')),
+              bottomNavigationBar: BottomAppBar(
+                elevation: 0,
+                height: 120,
+                child: Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Text(
+                          '${LocalizedText().grandTotal ?? 'No Translation'}: ${orderActions.grandtotal}',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                      TextButton.icon(
+                        style: ButtonStyle(
+                            foregroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme.onTertiary),
+                            textStyle: MaterialStateProperty.all(Theme.of(context).textTheme.titleLarge),
+                            backgroundColor: MaterialStateProperty.all(Theme.of(context).buttonTheme.colorScheme?.tertiary),
+                            overlayColor: MaterialStateProperty.all(Theme.of(context).splashColor)),
+                        onPressed: () async {
+                          //TODO:: CHANGE PARAMETER TO PROPER ORDER ID, MAKE LOGIN THEN PERSISENT LOGIN THEN TABLE SELECT THEN PASS TABLE SELECT INTO URL PARAMETER
+                          TableActions tableActions = TableActions();
+                          SharedPreferences prefs = await SharedPreferences.getInstance();
+                          int tableId = prefs.getInt('table') ?? 0;
+                          tableActions.confirmOrder(tableId);
+                          print('token: ${prefs.getString('token')}');
+                          if (!context.mounted) return;
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                            return Splashscreen(
+                              orderId: tableId,
+                            );
+                          }));
+                          // ScaffoldMessenger.of(context).removeCurrentSnackBar();
+                          // ScaffoldMessenger.of(context).showSnackBar(
+                          //   const SnackBar(
+                          //     content: Text('Order Completed Please Wait...'),
+                          //     duration: Duration(seconds: 2),
+                          //   ),
+                          // );
+                        },
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        label: Text(LocalizedText().continues ?? 'No Translation'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+        });
   }
 }
 
@@ -173,7 +267,7 @@ class OrderItem extends StatefulWidget {
   int count;
   final String? url;
   final String currency;
-  final void Function(bool operation) updateCount; // Callback function to update count
+  final void Function(bool operation)? updateCount; // Callback function to update count
 
   OrderItem({
     Key? key,
@@ -184,7 +278,7 @@ class OrderItem extends StatefulWidget {
     required this.name,
     required this.url,
     required this.currency,
-    required this.updateCount, // Include the callback function in the constructor
+    this.updateCount, // Include the callback function in the constructor
   }) : super(key: key);
 
   @override
@@ -247,7 +341,7 @@ class _OrderItemState extends State<OrderItem> {
                       visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
                       onPressed: () {
                         setState(() {
-                          widget.updateCount(false);
+                          widget.updateCount!(false);
                         });
                       },
                       icon: const Icon(
@@ -260,7 +354,7 @@ class _OrderItemState extends State<OrderItem> {
                         visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
                         onPressed: () {
                           setState(() {
-                            widget.updateCount(true);
+                            widget.updateCount!(true);
                           });
                         },
                         icon: const Icon(

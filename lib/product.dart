@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:men_u/BaseApi.dart';
+import 'package:men_u/Localization.dart';
 import 'package:men_u/widgets/cart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -155,7 +156,7 @@ class _ProductState extends State<Product> {
                                 Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            "Add to cart",
+                            LocalizedText().addtocart ?? 'No Translation',
                             style:
                                 Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.bold),
                           )

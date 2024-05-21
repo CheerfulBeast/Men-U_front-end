@@ -28,7 +28,7 @@ class TablePick extends StatelessWidget {
             IconButton(
                 onPressed: () {
                   logout();
-                  Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                  Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) {
                     return LoginScreen();
                   }));
                 },

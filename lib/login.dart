@@ -92,6 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 20,
                 ),
                 TextFormField(
+                  obscureText: true,
                   showCursor: true,
                   controller: passwordController,
                   decoration: InputDecoration(
