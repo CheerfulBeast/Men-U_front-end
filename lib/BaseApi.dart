@@ -9,7 +9,8 @@ import 'package:men_u/Localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BaseAPI {
-  static var rootUrl = "http://192.168.254.136:8000/";
+  static var rootUrl = "http://192.168.82.152:8000/"; //phone
+  //static var rootUrl = "http://192.168.254.110:8000/"; //home
   static var api = "${rootUrl}api/";
 
   static String? token; // Make token nullable

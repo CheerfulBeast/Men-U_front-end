@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:men_u/BaseApi.dart';
+import 'package:men_u/Localization.dart';
 import 'package:men_u/table.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -113,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     //TODO:: Login Controller
                     login(userController.text, passwordController.text);
                   },
-                  child: const Text("Submit"),
+                  child: Text(LocalizedText().continues ?? 'No Translation'),
                 ),
               ],
             ),

@@ -33,6 +33,7 @@ class LocalizedText {
   String? remove = '';
   String? wait = '';
   String? checkout = '';
+  String? languageText = '';
 
   void translate(int language) {
     switch (language) {
@@ -57,7 +58,8 @@ class LocalizedText {
         remove = '订单项已被移除';
         wait = '请等待付款';
         step7 = '食物已上桌';
-        checkout = '结账';
+        checkout = '下订单';
+        languageText = '普通话';
         break;
       case 2:
         menu = 'Menu';
@@ -81,7 +83,8 @@ class LocalizedText {
         remove = "L'article de la commande a été supprimé";
         wait = 'Veuillez attendre le paiement';
         step7 = 'La nourriture est servie';
-        checkout = 'Caisse';
+        checkout = 'Passer la commande';
+        languageText = 'Français';
         break;
       case 3:
         menu = 'Speisekarte';
@@ -104,7 +107,7 @@ class LocalizedText {
         remove = 'Bestellartikel wurde entfernt';
         wait = 'Bitte warten Sie auf die Zahlung';
         step7 = 'Das Essen wird serviert';
-        checkout = 'Kasse';
+        checkout = 'Bestellung aufgeben';
         break;
       case 4:
         menu = 'Menú';
@@ -127,7 +130,7 @@ class LocalizedText {
         remove = 'El artículo del pedido ha sido eliminado';
         wait = 'Por favor, espere para el pago';
         step7 = 'La comida está servida';
-        checkout = 'Pagar';
+        checkout = 'Bestellung aufgeben';
         break;
       case 5:
         menu = 'Menu';
@@ -150,7 +153,7 @@ class LocalizedText {
         remove = 'Order item has been removed';
         wait = 'Waiting for Payment';
         step7 = 'Food is served';
-        checkout = 'Checkout';
+        checkout = 'Place Order';
         break;
       default:
         menu = 'Menu';
@@ -173,7 +176,7 @@ class LocalizedText {
         remove = 'Order item has been removed';
         wait = 'Please Wait for Payment';
         step7 = 'Food is served';
-        checkout = 'Checkout';
+        checkout = 'Place Order';
         break;
     }
   }

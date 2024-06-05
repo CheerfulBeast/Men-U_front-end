@@ -9,6 +9,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 class Language extends StatelessWidget {
   LanguageActions languageAction = LanguageActions();
   dynamic languages;
+
+  String translatedText(int index) {
+    switch (index) {
+      case 0:
+        return '普通话';
+      case 1:
+        return 'Français';
+      case 2:
+        return 'Deutsch';
+      case 3:
+        return 'Español';
+      case 4:
+        return 'English';
+      default:
+        return 'No Language';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
@@ -57,7 +75,7 @@ class Language extends StatelessWidget {
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(vertical: 20),
                                   child: Text(
-                                    '${languageAction.languages[index]['language']}',
+                                    translatedText(index),
                                     style: Theme.of(context).textTheme.headlineMedium!.copyWith(color: Colors.white),
                                   ),
                                 )));

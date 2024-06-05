@@ -85,16 +85,16 @@ class Item extends StatelessWidget {
                   ),
                   SizedBox.square(
                     dimension: 30,
-                    child: IconButton.filledTonal(
-                      padding: EdgeInsets.all(0),
-                      onPressed: () {
-                        //TODO:: Ordering Store API CALL only add 1
-                        Navigator.of(context).push(MaterialPageRoute(builder: (contexdt) {
-                          return Receipt();
-                        }));
-                      },
-                      icon: Icon(Icons.add_rounded),
-                    ),
+                    // child: IconButton.filledTonal(
+                    //   padding: EdgeInsets.all(0),
+                    //   onPressed: () {
+                    //     //TODO:: Ordering Store API CALL only add 1
+                    //     Navigator.of(context).push(MaterialPageRoute(builder: (contexdt) {
+                    //       return Receipt();
+                    //     }));
+                    //   },
+                    //   icon: Icon(Icons.add_rounded),
+                    // ),
                   )
                 ],
               ),

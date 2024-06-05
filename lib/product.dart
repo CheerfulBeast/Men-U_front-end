@@ -167,6 +167,12 @@ class _ProductState extends State<Product> {
                 ),
               ),
             ),
+            Card.outlined(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text('$count'),
+              ),
+            ),
             Card(
               child: Row(
                 children: [

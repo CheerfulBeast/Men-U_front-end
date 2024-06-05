@@ -26,7 +26,8 @@ void main() async {
     UserActions user = UserActions();
     await user.getUser();
     log('User is logged in');
-    LocalizedText().translate(user.userData['language']);
+    // LocalizedText().translate(user.userData['language']);
+    LocalizedText().translate(5);
   } else {
     log('User is not logged in');
   }
@@ -143,7 +144,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   itemBuilder: (context, index) {
                     return ListTile(
                       dense: true,
-                      title: Text(languages[index]['language']),
+                      title: Text(Language().translatedText(index)),
                       onTap: () async {
                         SharedPreferences prefs = await SharedPreferences.getInstance();
                         prefs.setInt('language', languages[index]['id']);
@@ -236,7 +237,8 @@ class _MyHomePageState extends State<MyHomePage> {
                         if (index == 0) {
                           print("index category: $index");
                           return Category(
-                            url: images[0],
+                            url:
+                                'https://media.istockphoto.com/id/1316145932/photo/table-top-view-of-spicy-food.jpg?b=1&s=612x612&w=0&k=20&c=X6CkFGpSKhNZeiii8Pp2M_YrBdqs7tRaBytkGi48a0U=',
                             name: LocalizedText().all ?? "All",
                             callback: () => fetchData(),
                           );
